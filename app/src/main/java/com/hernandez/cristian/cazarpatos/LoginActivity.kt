@@ -4,11 +4,15 @@ import android.content.Intent
 import android.media.MediaPlayer
 import android.os.Bundle
 import android.widget.Button
+import android.widget.CheckBox
 import android.widget.EditText
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 
 class LoginActivity : AppCompatActivity() {
+    lateinit var manejadorArchivo: FileHandler
+    lateinit var checkBoxRecordarme: CheckBox
+
     lateinit var editTextEmail: EditText
     lateinit var editTextPassword:EditText
     lateinit var buttonLogin: Button
@@ -28,6 +32,9 @@ class LoginActivity : AppCompatActivity() {
         editTextPassword = findViewById(R.id.editTextPassword)
         buttonLogin = findViewById(R.id.buttonLogin)
         buttonNewUser = findViewById(R.id.buttonNewUser)
+        checkBoxRecordarme = findViewById(R.id.checkBoxRecordarme)
+        LeerDatosDePreferencias()
+
         //Eventos clic
         buttonLogin.setOnClickListener {
             val email = editTextEmail.text.toString()
@@ -35,6 +42,8 @@ class LoginActivity : AppCompatActivity() {
             //Validaciones de datos requeridos y formatos
             if(!validateRequiredData())
                 return@setOnClickListener
+            //Guardar datos en preferencias.
+            GuardarDatosEnPreferencias()
             //Si pasa validación de datos requeridos, ir a pantalla principal
             val intent = Intent(this, MainActivity::class.java)
             intent.putExtra(EXTRA_LOGIN, email)
@@ -47,6 +56,77 @@ class LoginActivity : AppCompatActivity() {
         mediaPlayer=MediaPlayer.create(this, R.raw.title_screen)
         mediaPlayer.start()
     }
+    private fun GuardarDatosEnPreferencias(){
+        val email = editTextEmail.text.toString()
+        val clave = editTextPassword.text.toString()
+        val listadoAGrabar:Pair<String,String>
+        if(checkBoxRecordarme.isChecked){
+            listadoAGrabar = email to clave
+        }
+        else{
+            listadoAGrabar ="" to ""
+        }
+        // Shared Preferences
+        manejadorArchivo = SharedPreferencesManager(this)
+        manejadorArchivo.SaveInformation(listadoAGrabar)
+
+        // Encripted Shared Preferences
+        manejadorArchivo = EncriptedSharedPreferencesManager(this)
+        manejadorArchivo.SaveInformation(listadoAGrabar)
+
+        // File Internal Manager
+        manejadorArchivo = FileInternalManager(this)
+        manejadorArchivo.SaveInformation(listadoAGrabar)
+
+        // File External Manager
+        manejadorArchivo = FileExternalManager(this)
+        manejadorArchivo.SaveInformation(listadoAGrabar)
+    }
+
+
+    //Metodo de lectura
+    private fun LeerDatosDePreferencias(){
+        manejadorArchivo = SharedPreferencesManager(this)
+        var listadoLeido : Pair <String, String>
+
+        //Shared Preferences
+        listadoLeido = manejadorArchivo.ReadInformation()
+        if(listadoLeido.first != null){
+            checkBoxRecordarme.isChecked = true
+        }
+        editTextEmail.setText ( listadoLeido.first )
+        editTextPassword.setText ( listadoLeido.second )
+
+        //EncryptedShared Preferences
+        manejadorArchivo = EncriptedSharedPreferencesManager(this)
+        listadoLeido = manejadorArchivo.ReadInformation()
+        if(listadoLeido.first != null){
+            checkBoxRecordarme.isChecked = true
+        }
+        editTextEmail.setText ( listadoLeido.first )
+        editTextPassword.setText ( listadoLeido.second )
+
+        // File Internal Manager
+        manejadorArchivo = FileInternalManager(this)
+        listadoLeido = manejadorArchivo.ReadInformation()
+        if(listadoLeido.first != null){
+            checkBoxRecordarme.isChecked = true
+        }
+        editTextEmail.setText ( listadoLeido.first )
+        editTextPassword.setText ( listadoLeido.second )
+
+        // File External Manager
+        manejadorArchivo = FileExternalManager(this)
+        listadoLeido = manejadorArchivo.ReadInformation()
+        if(listadoLeido.first != null){
+            checkBoxRecordarme.isChecked = true
+        }
+        editTextEmail.setText ( listadoLeido.first )
+        editTextPassword.setText ( listadoLeido.second )
+    }
+
+
+
     private fun validateRequiredData():Boolean{
         val email = editTextEmail.text.toString()
         val password = editTextPassword.text.toString()
